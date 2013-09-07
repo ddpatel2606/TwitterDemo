@@ -4,9 +4,13 @@ package com.tmm.android.twitter;
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
+import oauth.signpost.exception.OAuthNotAuthorizedException;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
-import twitter4j.http.AccessToken;
+import twitter4j.auth.AccessToken;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,9 +24,8 @@ import android.widget.Toast;
 import com.tmm.android.twitter.appliaction.TwitterApplication;
 import com.tmm.android.twitter.util.Constants;
 
-
-
-public class AuthActivity extends Activity {
+public class AuthActivity extends Activity
+{
 
 	private Twitter twitter;
 	private OAuthProvider provider;
@@ -30,7 +33,7 @@ public class AuthActivity extends Activity {
 
 	private String CONSUMER_KEY =           Constants.CONSUMER_KEY;
 	private String CONSUMER_SECRET =        Constants.CONSUMER_SECRET;
-	private String CALLBACK_URL =           "callback://tweeter";
+	private String CALLBACK_URL =           Constants.OAUTH_CALLBACK_URL;
 
 	private Button buttonLogin;
 
@@ -87,8 +90,8 @@ public class AuthActivity extends Activity {
 	 */
 	private AccessToken getAccessToken() {
 		SharedPreferences settings = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
-		String token = settings.getString("accessTokenToken", "");
-		String tokenSecret = settings.getString("accessTokenSecret", "");
+		String token = settings.getString("accessTokenToken", Constants.ACCESS_TOKEN);
+		String tokenSecret = settings.getString("accessTokenSecret", Constants.TOKEN_SECRET);
 		if (token!=null && tokenSecret!=null && !"".equals(tokenSecret) && !"".equals(token)){
 			return new AccessToken(token, tokenSecret);
 		}
@@ -104,11 +107,35 @@ public class AuthActivity extends Activity {
 	private void askOAuth() {
 		try {
 			consumer = new CommonsHttpOAuthConsumer(CONSUMER_KEY, CONSUMER_SECRET);
-			provider = new DefaultOAuthProvider("http://twitter.com/oauth/request_token", "http://twitter.com/oauth/access_token", "http://twitter.com/oauth/authorize");
-			String authUrl = provider.retrieveRequestToken(consumer, CALLBACK_URL);
-			Toast.makeText(this, "Please authorize this app!", Toast.LENGTH_LONG).show();
-			setConsumerProvider();
-			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
+			provider = new  DefaultOAuthProvider
+			("https://api.twitter.com/oauth/request_token",
+					"https://api.twitter.com/oauth/access_token",
+					"https://api.twitter.com/oauth/authorize");
+			
+			
+			new Thread(new Runnable() {
+				public void run() {
+					try {
+						String authUrl = provider.retrieveRequestToken(consumer, CALLBACK_URL);
+						
+						setConsumerProvider();
+						startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
+					} catch (OAuthMessageSignerException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (OAuthNotAuthorizedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (OAuthExpectationFailedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (OAuthCommunicationException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}).start();
+			
 		} catch (Exception e) {
 			Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
 		}

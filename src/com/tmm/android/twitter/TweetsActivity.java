@@ -13,7 +13,7 @@ import com.tmm.android.twitter.reader.TweetReader;
 
 public class TweetsActivity extends ListActivity {
 	
-	private TwitterListAdapter adapter;
+	
 
 	/** Called when the activity is first created. */
 	@Override
@@ -24,7 +24,7 @@ public class TweetsActivity extends ListActivity {
 		
 		ArrayList<JSONObject> jobs = TweetReader.retrieveSpecificUsersTweets(t);
 		
-		adapter = new TwitterListAdapter(this,jobs);
+	 TwitterListAdapter adapter = new TwitterListAdapter(this,jobs);
 		setListAdapter(adapter);
 	}
 

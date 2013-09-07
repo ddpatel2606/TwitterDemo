@@ -10,6 +10,7 @@ import twitter4j.Paging;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
 import android.util.Log;
 
 import com.tmm.android.twitter.util.Utility;
@@ -26,16 +27,40 @@ public class TweetReader {
 	 */
 	public static ArrayList<JSONObject> retrieveSpecificUsersTweets(Twitter twitter){
 		List<Status> statuses = new ArrayList<Status>();
-	    try {
+	   /* try {
 	    	Paging p = new Paging(1);	//get first page only of timeline - dont want to return everything!
-			statuses = twitter.getFriendsTimeline(p);
+			statuses = twitter.getUserTimeline(p);
 		} catch (TwitterException e) {
 			Log.e("Twitter", "Error retrieving tweets");
 			Log.e("Twitter", e.getMessage());
-		}
+		}*/
 
+	    // gets Tweets As per Pass Username 
+     
+        try
+        {
+        	
+            String args="SirJadeja";
+            String user;
+            if (args.length() > 0) {
+                user = args;
+                statuses = twitter.getUserTimeline(user);
+            } else {
+                user = twitter.verifyCredentials().getScreenName();
+                statuses = twitter.getUserTimeline();
+            }
+            System.out.println("Showing @" + user + "'s user timeline.");
+            
+        } catch (TwitterException te) {
+            te.printStackTrace();
+            System.out.println("Failed to get timeline: " + te.getMessage());
+           
+        }
+        
 		return convertTimelineToJson(statuses); 
 	}
+	
+	
 	
 	
 	
@@ -51,7 +76,7 @@ public class TweetReader {
 		try {
 			if (statuses.size()>0){
 				for (Status s : statuses){
-					String avatar = "http://" + s.getUser().getProfileImageURL().getHost() + s.getUser().getProfileImageURL().getPath();
+					String avatar = "http://" + s.getUser().getProfileImageURL() + s.getUser().getProfileImageURL();
 					JSONObject object = new JSONObject();
 					object.put("tweet", s.getText());
 					String timePosted = Utility.getDateDifference(s.getCreatedAt());
